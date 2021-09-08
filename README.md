@@ -1,0 +1,2 @@
+# cxxChartSync
+Chart Synchronize For MT5(mql5) 保存用レポジトリ
