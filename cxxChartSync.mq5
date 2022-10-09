@@ -10,10 +10,10 @@
 //| Script program start function                                    |
 //+------------------------------------------------------------------+
 
-input long             cxxExecuteKey        = 65;         // 動作キー
-input ENUM_LINE_STYLE  cxxVerticalLineType  = STYLE_DASH; // 線のタイプ
-input long             cxxVerticalLineWidth = 1;          // 線の太さ
-input color            cxxVerticalLineColor = clrGray;    // 線の色
+input long             cxxExecuteKey        = 65;        // 動作キー
+input ENUM_LINE_STYLE  cxxVerticalLineType  = STYLE_DOT; // 線のタイプ
+input long             cxxVerticalLineWidth = 1;         // 線の太さ
+input color            cxxVerticalLineColor = clrGray;   // 線の色
 
 int OnInit() {
    // 自動スクロールを停止
@@ -27,11 +27,11 @@ int OnInit() {
 
 void DrawVerticalLine(long chart_id, const string object_name, datetime time) {
 
-   ObjectCreate    (chart_id, object_name, OBJ_VLINE, cxxVerticalLineType, time, 0);
+   ObjectCreate    (chart_id, object_name, OBJ_VLINE, 0, time, 0);
    ObjectSetInteger(chart_id, object_name, OBJPROP_WIDTH, cxxVerticalLineWidth);
    ObjectSetInteger(chart_id, object_name, OBJPROP_COLOR, cxxVerticalLineColor);
    ObjectSetInteger(chart_id, object_name, OBJPROP_BACK, true);
-   ObjectSetInteger(chart_id, object_name, OBJPROP_STYLE, STYLE_DOT);
+   ObjectSetInteger(chart_id, object_name, OBJPROP_STYLE, cxxVerticalLineType);
    
    ChartRedraw(chart_id);
 }
