@@ -11,9 +11,13 @@
 //+------------------------------------------------------------------+
 
 input long             cxxExecuteKey        = 65;        // 動作キー
+input long             cxxSubKey            = 83;        // 動作キー（サブ）
 input ENUM_LINE_STYLE  cxxVerticalLineType  = STYLE_DOT; // 線のタイプ
 input long             cxxVerticalLineWidth = 1;         // 線の太さ
 input color            cxxVerticalLineColor = clrGray;   // 線の色
+
+// cxxParallelButtonにも同じものがあるので同期するように、クソコード
+#define LINE_NAME "Cxx_Chart_Sync_Line"
 
 int OnInit() {
    // 自動スクロールを停止
@@ -37,6 +41,13 @@ void DrawVerticalLine(long chart_id, const string object_name, datetime time) {
 }
 
 
+// 時間軸を変えるだけで動作してしまうので今はコメントアウト
+void OnDeinit(const int reason) {
+   //ObjectDelete(0, LINE_NAME);
+   //ObjectFind(0, LINE_NAME);
+   //ChartRedraw();
+}
+
 
 void  OnChartEvent(
    const int       id,
@@ -44,52 +55,54 @@ void  OnChartEvent(
    const double&   dparam,
    const string&   sparam) {
    
-   static long MouseX;
-   static double MouseY;
-   static int GetSubWindow;
-   static datetime GetTime;
-   static double GetPrice;
-   
-   //static const long cxxExecuteKey = 65; // A で動作
+   static int mosueX;
+   static int mosueY;
+   static int subwindow;
+   static datetime time;
+   static double price;
    
    if (id == CHARTEVENT_MOUSE_MOVE) {
-      MouseX = lparam;
-      MouseY = dparam;
+      mosueX = int(lparam);
+      mosueY = int(dparam);
    }
    
    if (id == CHARTEVENT_KEYDOWN && lparam == cxxExecuteKey) {
       
       // マウスの位置の時間と値を取得
-      ChartXYToTimePrice(ChartID(), MouseX, MouseY, GetSubWindow, GetTime, GetPrice);
+      ChartXYToTimePrice(ChartID(), mosueX, mosueY, subwindow, time, price);
       
       long nowID = ChartID();
-      
-      long firstVisibleBar = ChartGetInteger(nowID,CHART_FIRST_VISIBLE_BAR);
-      long visibleBars     = ChartGetInteger(nowID, CHART_VISIBLE_BARS);
-      long widthInBars     = ChartGetInteger(nowID, CHART_WIDTH_IN_BARS);
-      
-      
       long chartID = ChartFirst();
       
       while(chartID != -1) {
       
          if (chartID == nowID) {
-            DrawVerticalLine(chartID, "Time_Vertical_Line", GetTime);
+            DrawVerticalLine(chartID, LINE_NAME, time);
             chartID = ChartNext(chartID);
             continue;
          }
          
-         long fvb = ChartGetInteger(nowID, CHART_FIRST_VISIBLE_BAR);
-         long vb  = ChartGetInteger(nowID, CHART_VISIBLE_BARS);
-         long b   = (firstVisibleBar < visibleBars) ? firstVisibleBar : visibleBars;
-         
          // バー番号を取得
-         int startBar = iBarShift(NULL, ChartPeriod(chartID), GetTime, false);
-         ChartNavigate(chartID, CHART_END, -startBar + (ChartGetInteger(chartID, CHART_WIDTH_IN_BARS) / 2));
+         int startBar = iBarShift(NULL, ChartPeriod(chartID), time, false);
+         ChartNavigate(chartID, CHART_END, -startBar + int((ChartGetInteger(chartID, CHART_WIDTH_IN_BARS) / 2)));
          
-         DrawVerticalLine(chartID, "Time_Vertical_Line", GetTime);
+         DrawVerticalLine(chartID, LINE_NAME, time);
          
          chartID = ChartNext(chartID);
+      }
+   }
+   
+   if (id == CHARTEVENT_KEYDOWN && lparam == cxxSubKey) {
+   
+      // 基準となるラインがあるか調べる
+      if (ObjectFind(ChartID(), LINE_NAME) >= 0) {
+         
+         // 基準ラインの時間からバー数を計算
+         datetime time = (datetime)ObjectGetInteger(ChartID(), LINE_NAME, OBJPROP_TIME);
+         int startBar = iBarShift(NULL, Period(), time, false);
+         
+         // 基準ラインを画面中央になるようにチャートを移動させる
+         ChartNavigate(ChartID(), CHART_END, -startBar + (int)(ChartGetInteger(ChartID(), CHART_VISIBLE_BARS) / 2));
       }
    }
 }
